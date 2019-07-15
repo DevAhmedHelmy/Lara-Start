@@ -2,7 +2,10 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import axios from 'axios';
-import { Form, HasError, AlertError } from 'vform'
+import { Form, HasError, AlertError } from 'vform';
+import moment from 'moment';
+import Swal from 'sweetalert2';
+import VueProgressBar from 'vue-progressbar';
 window._ = require('lodash');
 
 /**
@@ -14,6 +17,44 @@ window._ = require('lodash');
 window.Vue = Vue;
 Vue.use(VueRouter);
 window.axios = axios;
+
+// Sweet alert
+window.Swal = Swal;
+
+window.Fire = new Vue();
+
+//VueProgressBar
+
+
+const options = {
+    color: '#bffaf3',
+    failedColor: '#874b4b',
+    thickness: '5px',
+    transition: {
+      speed: '0.2s',
+      opacity: '0.6s',
+      termination: 300
+    },
+    autoRevert: true,
+    location: 'left',
+    inverse: false
+  }
+
+  Vue.use(VueProgressBar, options);
+
+
+
+// retgister filter
+// 1-capitalize
+Vue.filter('capitalize',function (value) {
+        if (!value) return ''
+        value = value.toString()
+        return value.charAt(0).toUpperCase() + value.slice(1)
+    });
+// 2-moment
+Vue.filter('ago', function(date){
+    return moment(date).format("dddd, MMMM Do YYYY");
+});
 
 try {
     window.Popper = require('popper.js').default;

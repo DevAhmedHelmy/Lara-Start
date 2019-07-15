@@ -19,16 +19,18 @@
                     <th>ID</th>
                     <th>User Name</th>
                     <th>Email</th>
-                    <th>Status</th>
+                    <th>Type</th>
+                    <th>Registered At</th>
                     <th>Modify</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>183</td>
-                    <td>John Doe</td>
-                    <td>11-7-2014</td>
-                    <td><span class="tag tag-success">Approved</span></td>
+                <tr v-for="user in users" :key = "user.id">
+                    <td>{{user.id}}</td>
+                    <td>{{ user.name | capitalize }}</td>
+                    <td>{{ user.email }}</td>
+                    <td> {{ user.type | capitalize }} </td>
+                    <td> {{ user.created_at | ago }} </td>
                     <td>
                         <a href="#"><i class="fa fa-edit fa-sm"></i></a>
                         <a href="#"><i class="fa fa-trash fa-sm"></i></a>
@@ -55,8 +57,9 @@
                 <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <form @submit.prevent="login" @keydown="form.onKeydown($event)">
+            <form @submit.prevent="createUser" @keydown="form.onKeydown($event)" enctype="multipart/form-data">
+                <div class="modal-body">
+
                     <div class="form-group">
                     <label>Name</label>
                     <input v-model="form.name" type="text" name="name"
@@ -96,14 +99,24 @@
                     </select>
                     <has-error :form="form" field="type"></has-error>
                     </div>
+                    <div class="form-group">
+                        <label for="exampleFormControlFile1">Example file input</label>
+                        <input type="file" name="photo" class="form-control-file" id="exampleFormControlFile1">
+                    </div>
+                    <!-- <div class="form-group">
+                        <label>Upload Photo</label>
+                        <input type="file" name="photo"
+                            class="form-control-file" :class="{ 'is-invalid': form.errors.has('photo') }">
+                        <has-error :form="form" field="photo"></has-error>
+                    </div> -->
+                    <!-- <button :disabled="form.busy" type="submit" class="btn btn-primary">Log In</button> -->
 
-                    <button :disabled="form.busy" type="submit" class="btn btn-primary">Log In</button>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
             </div>
         </div>
         </div>
@@ -113,9 +126,12 @@
 </template>
 
 <script>
+
     export default {
+
         data () {
             return {
+                users:[],
             // Create a new form instance
             form: new Form({
                 name: '',
@@ -123,20 +139,47 @@
                 password: '',
                 type: '',
                 bio: '',
-                photo: '',
+
                 remember: false
             })
             }
         },
         methods: {
-            login () {
+            createUser () {
+                this.$Progress.start();
             // Submit the form via a POST request
-            this.form.post('/login')
-                .then(({ data }) => { console.log(data) })
+                this.form.post('api/user')
+                    .then(()=>{
+                        $("#addNewUser").modal('hide')
+                        Fire.$emit('AfterCreate');
+                        Swal.fire({
+                            position: 'top-end',
+                            type: 'success',
+                            title: 'User Created Successfuly',
+                            showConfirmButton: false,
+                            timer: 1500
+                            });
+                        this.$Progress.finish();
+                    })
+                    .catch(()=>{
+
+                    })
+
+
+
+            },
+            loadUser(){
+                axios.get('api/user')
+                    .then(({data}) => this.users = data.data);
             }
         },
-        mounted() {
-            console.log('Component mounted.')
-        }
+        created() {
+            this.loadUser();
+            Fire.$on('AfterCreate',()=>{
+                this.loadUser();
+            });
+            // setInterval(()=>this.loadUser(),3000)
+        },
+
     }
 </script>

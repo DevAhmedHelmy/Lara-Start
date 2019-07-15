@@ -19,7 +19,7 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
-Route::post('/login','Auth\LoginController@login');
+
 
 Route::get('/{vue_capture?}', function () {
     return view('layouts.master');
