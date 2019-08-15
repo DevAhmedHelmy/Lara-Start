@@ -6,7 +6,7 @@
             <h3 class="card-title">Users Table</h3>
 
             <div class="card-tools">
-                <button class="btn btn-success" data-toggle="modal" data-target="#addNewUser">
+                <button class="btn btn-success" data-toggle="modal" @click="newModal">
                     <i class="fa fa-user-plus"></i> Add New User
                 </button>
             </div>
@@ -32,8 +32,8 @@
                     <td> {{ user.type | capitalize }} </td>
                     <td> {{ user.created_at | ago }} </td>
                     <td>
-                        <a href="#"><i class="fa fa-edit fa-sm"></i></a>
-                        <a href="#"><i class="fa fa-trash fa-sm"></i></a>
+                        <a href="#" @click="editModal(user)"><i class="fa fa-edit fa-sm"></i></a>
+                        <a href="#" @click="deleteUser(user.id)"><i class="fa fa-trash fa-sm"></i></a>
                     </td>
                 </tr>
 
@@ -48,16 +48,16 @@
 
 
           <!-- Modal to add new user -->
-        <div class="modal fade" id="addNewUser" tabindex="-1" role="dialog" aria-labelledby="addNewUserTitle" aria-hidden="true">
+        <div class="modal fade" id="newModel" tabindex="-1" role="dialog" aria-labelledby="addNewUserTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addNewUserTitle">Add New User</h5>
+                <h5 class="modal-title" id="addNewUserTitle">{{ editmodal ? "Update User" : "Add New User" }}</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form @submit.prevent="createUser" @keydown="form.onKeydown($event)" enctype="multipart/form-data">
+            <form @submit.prevent="editmodal ? updateUser() : createUser()" @keydown="form.onKeydown($event)" enctype="multipart/form-data">
                 <div class="modal-body">
 
                     <div class="form-group">
@@ -74,9 +74,21 @@
                     <has-error :form="form" field="email"></has-error>
                     </div>
 
-                    <div class="form-group">
+                    <div v-show="!editmodal" class="form-group">
                     <label>Password</label>
                     <input v-model="form.password" type="password" name="password"
+                        class="form-control" :class="{ 'is-invalid': form.errors.has('password') }" placeholder="password">
+                    <has-error :form="form" field="password"></has-error>
+                    </div>
+                    <div v-show="editmodal" class="form-group">
+                    <label>New Password</label>
+                    <input v-model="form.password" type="password" name="new_password"
+                        class="form-control" :class="{ 'is-invalid': form.errors.has('password') }" placeholder="password">
+                    <has-error :form="form" field="password"></has-error>
+                    </div>
+                    <div v-show="editmodal" class="form-group">
+                    <label>Confirmation Password</label>
+                    <input v-model="form.password_confirmation" type="password" name="password_confirmation"
                         class="form-control" :class="{ 'is-invalid': form.errors.has('password') }" placeholder="password">
                     <has-error :form="form" field="password"></has-error>
                     </div>
@@ -114,7 +126,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button v-show="editmodal" type="submit" class="btn btn-success">Update</button>
+                    <button v-show="!editmodal" type="submit" class="btn btn-primary">Save</button>
+                    <!-- <button type="submit" class="btn btn-primary">{{ editmodal ? "Update" : "Save" }}</button> -->
                 </div>
             </form>
             </div>
@@ -131,9 +145,11 @@
 
         data () {
             return {
+                editmodal:false,
                 users:[],
             // Create a new form instance
             form: new Form({
+                id:'',
                 name: '',
                 email: '',
                 password: '',
@@ -145,6 +161,63 @@
             }
         },
         methods: {
+            updateUser(id){
+                this.$Progress.start();
+            // Submit the form via a POST request
+                this.form.put('api/user/'+this.form.id)
+                    .then(()=>{
+                        $("#newModel").modal('hide')
+                        Fire.$emit('AfterCreate');
+                        Swal.fire({
+                            position: 'top-end',
+                            type: 'success',
+                            title: 'User Update Successfuly',
+                            showConfirmButton: false,
+                            timer: 1500
+                            });
+                        this.$Progress.finish();
+                    })
+                    .catch(()=>{
+                        this.$Progress.fail();
+                    })
+            },
+            editModal(user){
+                this.form.reset();
+                $('#newModel').modal('show');
+                this.form.fill(user);
+                this.editmodal = true;
+            },
+
+            newModal(){
+                this.form.reset();
+                $('#newModel').modal('show');
+            },
+            deleteUser(id){
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if(result.value){
+                            this.form.delete('api/user/'+id).then(()=>{
+                                Swal.fire(
+                                'Deleted!',
+                                'Your file has been deleted.',
+                                'success'
+                                )
+                                Fire.$emit("AfterCreate");
+                            }).catch(()=>{
+                                Swal("Failed","There are something worong","Warning");
+                            });
+                        }
+
+
+                    })
+            },
             createUser () {
                 this.$Progress.start();
             // Submit the form via a POST request

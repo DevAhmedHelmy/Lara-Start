@@ -9,6 +9,10 @@ use Validator;
 use App\User;
 class UsersController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
     /**
      * Display a listing of the resource.
      *
@@ -16,7 +20,8 @@ class UsersController extends Controller
      */
     public function index()
     {
-        return User::latest()->paginate(5);
+        //dd('fdfdf');
+       return User::latest()->paginate(5);
     }
 
     /**
@@ -60,6 +65,12 @@ class UsersController extends Controller
     //     ]);
         }
 
+
+    public function profile()
+    {
+        dd('fdfdf');
+        //return $data;
+    }
     /**
      * Display the specified resource.
      *
@@ -80,7 +91,18 @@ class UsersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = User::findOrfail($id);
+        $user->name=request('name');
+        $user->email=request('email');
+        $user->type=request('type');
+        $user->bio=request('bio');
+        if ((request('new_password') && request('password_confirmation')) && (request('new_password') === request('password_confirmation')))
+
+        {
+            $user->password=bcrypt(request('new_password'));
+        }
+        $user->save();
+
     }
 
     /**
@@ -91,6 +113,8 @@ class UsersController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $user = User::findOrfail($id);
+        $user->delete();
+        return['message'=>'user is deleted'];
     }
 }

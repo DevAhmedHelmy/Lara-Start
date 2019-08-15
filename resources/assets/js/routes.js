@@ -15,7 +15,11 @@ let routes = [
     {
         path: '/profile',
         component: require('./views/dashboard/Profile.vue').default
-    }
+    },
+    {
+        path: '/developer',
+        component: require('./views/dashboard/Developer.vue').default
+    },
 ]
 
 export default new VueRouter({
